@@ -72,6 +72,17 @@ export default function SagaEnVivo() {
 
   return (
     <div style={{ minHeight: '100%', background: '#f5f5f0', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+        background: '#f5f5f0',
+        paddingBottom: 4,
+        marginBottom: -4,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#fff', padding: '12px 16px', borderRadius: 10, border: '1px solid #00000009' }}>
         <button onClick={onComedor} disabled={lanzando} style={btn('#f59e0b', lanzando)}>🍽 Servir en comedor</button>
         <button onClick={onCama} disabled={lanzando} style={btn('#8b5cf6', lanzando)}>🛏 Servir en cama</button>
@@ -165,6 +176,8 @@ export default function SagaEnVivo() {
           </div>
         </div>
       )}
+
+      </div>
 
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
         <PanelGrabaciones
