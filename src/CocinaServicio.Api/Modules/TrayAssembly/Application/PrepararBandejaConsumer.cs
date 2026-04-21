@@ -32,12 +32,12 @@ public class PrepararBandejaConsumer : IConsumer<PrepararBandeja>
         if (_failureInjector.DebeFallar("AssemblingTray", out _))
         {
             _failureInjector.Consumir("AssemblingTray");
-            await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
             await context.Publish(new BandejaNoDisponible(msg.ComidaId, msg.Destino), context.CancellationToken);
             return;
         }
 
-        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
 
         if (msg.Destino == Destino.Comedor)
         {

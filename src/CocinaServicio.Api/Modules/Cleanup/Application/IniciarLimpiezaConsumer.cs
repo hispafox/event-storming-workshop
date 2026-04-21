@@ -20,7 +20,7 @@ public class IniciarLimpiezaConsumer : IConsumer<IniciarLimpieza>
 
         await context.Publish(new LavavajillasIniciado(msg.BandejaId, DateTime.UtcNow), context.CancellationToken);
 
-        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
 
         await context.Publish(new LavavajillasTerminado(msg.BandejaId, DateTime.UtcNow), context.CancellationToken);
 

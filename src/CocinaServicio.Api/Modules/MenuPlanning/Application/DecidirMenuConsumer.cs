@@ -25,7 +25,7 @@ public class DecidirMenuConsumer : IConsumer<DecidirMenu>
         var posibles = await _inventory.GetPlatosPorDefectoAsync(conBebida: false, context.CancellationToken);
         await context.Publish(new NeveraConsultada(msg.CorrelationId, posibles.Count, DateTime.UtcNow), context.CancellationToken);
 
-        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
 
         var platos = msg.PlatosDeseados.Count > 0 ? msg.PlatosDeseados : posibles;
         var menuId = msg.CorrelationId;

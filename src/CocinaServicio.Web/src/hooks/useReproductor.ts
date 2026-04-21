@@ -4,9 +4,10 @@ import type {
   CompensacionId, EstadoDiagrama, EventoId, ServicioId,
 } from '../pages/DiagramaArquitectura';
 
-export type EstadoReproductor = 'vacio' | 'cargando' | 'listo' | 'reproduciendo' | 'pausado' | 'terminado';
+export type ModoReproduccion = 'pasos' | 'tiempo';
 
-const RESALTADO_MS = 1400;
+const RESALTADO_MS_PASOS = 500;
+const RESALTADO_MS_TIEMPO = 1400;
 
 const MAPA_SERVICIOS: Record<string, ServicioId> = {
   DecidirMenu: 'menuPlanning', MenuDecidido: 'menuPlanning',
@@ -47,20 +48,22 @@ const PARES_EXTERNO: Record<string, { fin: string; servicio: ServicioId }> = {
   LavavajillasIniciado: { fin: 'LavavajillasTerminado', servicio: 'lavavajillas' },
 };
 
-function calcularEstado(eventos: EventoGrabado[], cursorMs: number): EstadoDiagrama {
+type EventoVirtual = EventoGrabado & { offsetVirtualMs: number };
+
+function calcularEstado(eventos: EventoVirtual[], cursorMs: number, resaltadoMs: number): EstadoDiagrama {
   const servicios: EstadoDiagrama['servicios'] = {};
   const eventosActivos: EstadoDiagrama['eventos'] = {};
   const compensaciones: EstadoDiagrama['compensaciones'] = {};
 
   for (const ev of eventos) {
-    if (ev.offsetMs > cursorMs) break;
+    if (ev.offsetVirtualMs > cursorMs) break;
 
-    const enResaltado = cursorMs - ev.offsetMs <= RESALTADO_MS;
+    const enResaltado = cursorMs - ev.offsetVirtualMs <= resaltadoMs;
 
     const par = PARES_EXTERNO[ev.nombre];
     if (par) {
-      const fin = eventos.find(e => e.nombre === par.fin && e.offsetMs > ev.offsetMs);
-      const finAlcanzado = fin !== undefined && fin.offsetMs <= cursorMs;
+      const fin = eventos.find(e => e.nombre === par.fin && e.offsetVirtualMs > ev.offsetVirtualMs);
+      const finAlcanzado = fin !== undefined && fin.offsetVirtualMs <= cursorMs;
       servicios[par.servicio] = finAlcanzado ? 'completed' : 'active';
       continue;
     }
@@ -91,12 +94,25 @@ export function useReproductor(grabacion: Grabacion | null) {
   const [cursorMs, setCursorMs] = useState(0);
   const [velocidad, setVelocidad] = useState(1);
   const [reproduciendo, setReproduciendo] = useState(false);
+  const [modo, setModo] = useState<ModoReproduccion>('pasos');
+  const [duracionPasoMs, setDuracionPasoMs] = useState(1500);
   const lastTickRef = useRef<number | null>(null);
 
+  const eventosVirtuales: EventoVirtual[] = useMemo(() => {
+    if (!grabacion) return [];
+    if (modo === 'tiempo') {
+      return grabacion.eventos.map(e => ({ ...e, offsetVirtualMs: e.offsetMs }));
+    }
+    return grabacion.eventos.map((e, i) => ({ ...e, offsetVirtualMs: i * duracionPasoMs }));
+  }, [grabacion, modo, duracionPasoMs]);
+
   const duracionMs = useMemo(() => {
-    if (!grabacion || grabacion.eventos.length === 0) return 0;
-    return grabacion.eventos[grabacion.eventos.length - 1].offsetMs + RESALTADO_MS;
-  }, [grabacion]);
+    if (eventosVirtuales.length === 0) return 0;
+    const resaltado = modo === 'pasos' ? duracionPasoMs : RESALTADO_MS_TIEMPO;
+    return eventosVirtuales[eventosVirtuales.length - 1].offsetVirtualMs + resaltado;
+  }, [eventosVirtuales, modo, duracionPasoMs]);
+
+  const resaltadoMs = modo === 'pasos' ? duracionPasoMs : RESALTADO_MS_PASOS;
 
   useEffect(() => {
     setCursorMs(0);
@@ -104,11 +120,14 @@ export function useReproductor(grabacion: Grabacion | null) {
   }, [grabacion?.correlationId]);
 
   useEffect(() => {
+    setCursorMs(0);
+  }, [modo, duracionPasoMs]);
+
+  useEffect(() => {
     if (!reproduciendo) {
       lastTickRef.current = null;
       return;
     }
-
     let rafId = 0;
     const tick = (ts: number) => {
       if (lastTickRef.current === null) lastTickRef.current = ts;
@@ -130,17 +149,16 @@ export function useReproductor(grabacion: Grabacion | null) {
 
   const estado: EstadoDiagrama = useMemo(() => {
     if (!grabacion) return { servicios: {}, eventos: {}, compensaciones: {} };
-    return calcularEstado(grabacion.eventos, cursorMs);
-  }, [grabacion, cursorMs]);
+    return calcularEstado(eventosVirtuales, cursorMs, resaltadoMs);
+  }, [grabacion, eventosVirtuales, cursorMs, resaltadoMs]);
 
   const eventoActualIdx = useMemo(() => {
-    if (!grabacion) return -1;
     let idx = -1;
-    for (let i = 0; i < grabacion.eventos.length; i++) {
-      if (grabacion.eventos[i].offsetMs <= cursorMs) idx = i; else break;
+    for (let i = 0; i < eventosVirtuales.length; i++) {
+      if (eventosVirtuales[i].offsetVirtualMs <= cursorMs) idx = i; else break;
     }
     return idx;
-  }, [grabacion, cursorMs]);
+  }, [eventosVirtuales, cursorMs]);
 
   const play = () => {
     if (cursorMs >= duracionMs) setCursorMs(0);
@@ -159,6 +177,11 @@ export function useReproductor(grabacion: Grabacion | null) {
     reproduciendo,
     terminado,
     eventoActualIdx,
+    eventosVirtuales,
+    modo,
+    setModo,
+    duracionPasoMs,
+    setDuracionPasoMs,
     play, pause, restart,
     setCursor: setCursorMs,
   };

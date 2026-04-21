@@ -12,6 +12,11 @@ const FALLOS = [
 ];
 
 const VELOCIDADES = [0.5, 1, 2, 4];
+const DURACIONES_PASO = [
+  { value: 800, label: 'Rápido' },
+  { value: 1500, label: 'Normal' },
+  { value: 2500, label: 'Lento' },
+];
 
 export default function SagaEnVivo() {
   const [grabacion, setGrabacion] = useState<Grabacion | null>(null);
@@ -55,13 +60,15 @@ export default function SagaEnVivo() {
   const saltarEvento = (direccion: 1 | -1) => {
     if (!grabacion) return;
     const idx = rep.eventoActualIdx + direccion;
-    if (idx < 0 || idx >= grabacion.eventos.length) return;
-    rep.setCursor(grabacion.eventos[idx].offsetMs);
+    if (idx < 0 || idx >= rep.eventosVirtuales.length) return;
+    rep.setCursor(rep.eventosVirtuales[idx].offsetVirtualMs);
   };
 
   const pct = rep.duracionMs > 0 ? (rep.cursorMs / rep.duracionMs) * 100 : 0;
   const eventos = grabacion?.eventos ?? [];
   const hayGrabacion = grabacion !== null;
+  const totalPasos = rep.eventosVirtuales.length;
+  const pasoActual = rep.eventoActualIdx >= 0 ? rep.eventoActualIdx + 1 : 0;
 
   return (
     <div style={{ minHeight: '100%', background: '#f5f5f0', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -80,29 +87,82 @@ export default function SagaEnVivo() {
       </div>
 
       {hayGrabacion && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#fff', padding: '10px 16px', borderRadius: 10, border: '1px solid #00000009' }}>
-          <button onClick={() => saltarEvento(-1)} disabled={rep.eventoActualIdx <= 0} style={btn('#475569', rep.eventoActualIdx <= 0)}>⏮</button>
-          <button onClick={rep.reproduciendo ? rep.pause : rep.play} style={btn('#0f172a', false)}>
-            {rep.reproduciendo ? '⏸ Pausa' : rep.terminado ? '↻ Repetir' : '▶ Play'}
-          </button>
-          <button onClick={() => saltarEvento(1)} disabled={rep.eventoActualIdx >= eventos.length - 1} style={btn('#475569', rep.eventoActualIdx >= eventos.length - 1)}>⏭</button>
-          <button onClick={rep.restart} style={btn('#64748b', false)}>🔄 Inicio</button>
-          <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>Velocidad:</span>
-          {VELOCIDADES.map(v => (
-            <button key={v} onClick={() => rep.setVelocidad(v)} style={{ ...btn(rep.velocidad === v ? '#0ea5e9' : '#cbd5e1', false), fontSize: 11, padding: '4px 10px' }}>{v}x</button>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#fff', padding: '10px 16px', borderRadius: 10, border: '1px solid #00000009' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button onClick={() => saltarEvento(-1)} disabled={rep.eventoActualIdx <= 0} style={btn('#475569', rep.eventoActualIdx <= 0)} title="Evento anterior">⏮</button>
+            <button onClick={rep.reproduciendo ? rep.pause : rep.play} style={btn('#0f172a', false)}>
+              {rep.reproduciendo ? '⏸ Pausa' : rep.terminado ? '↻ Repetir' : '▶ Play'}
+            </button>
+            <button onClick={() => saltarEvento(1)} disabled={rep.eventoActualIdx >= totalPasos - 1} style={btn('#475569', rep.eventoActualIdx >= totalPasos - 1)} title="Evento siguiente">⏭</button>
+            <button onClick={rep.restart} style={btn('#64748b', false)}>🔄 Inicio</button>
+
+            <span style={{ width: 1, height: 24, background: '#e5e5e0', marginLeft: 4 }} />
+
+            <div style={{ display: 'flex', gap: 2, background: '#f1f5f9', borderRadius: 6, padding: 2 }}>
+              <button
+                onClick={() => rep.setModo('pasos')}
+                style={toggleBtn(rep.modo === 'pasos')}
+                title="Cada evento tiene la misma duración visual">
+                Pasos
+              </button>
+              <button
+                onClick={() => rep.setModo('tiempo')}
+                style={toggleBtn(rep.modo === 'tiempo')}
+                title="Usa los tiempos reales de ejecución de la saga">
+                Tiempo real
+              </button>
+            </div>
+
+            {rep.modo === 'pasos' && (
+              <>
+                <span style={{ fontSize: 12, color: '#64748b' }}>Ritmo:</span>
+                {DURACIONES_PASO.map(d => (
+                  <button key={d.value} onClick={() => rep.setDuracionPasoMs(d.value)}
+                    style={{ ...btn(rep.duracionPasoMs === d.value ? '#22c55e' : '#cbd5e1', false), fontSize: 11, padding: '4px 10px' }}>
+                    {d.label}
+                  </button>
+                ))}
+              </>
+            )}
+
+            <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>Velocidad:</span>
+            {VELOCIDADES.map(v => (
+              <button key={v} onClick={() => rep.setVelocidad(v)}
+                style={{ ...btn(rep.velocidad === v ? '#0ea5e9' : '#cbd5e1', false), fontSize: 11, padding: '4px 10px' }}>{v}x</button>
+            ))}
+
+            <span style={{ fontSize: 12, color: '#1e293b', fontWeight: 600, marginLeft: 'auto' }}>
+              {rep.modo === 'pasos'
+                ? `Paso ${pasoActual} / ${totalPasos}`
+                : `${(rep.cursorMs / 1000).toFixed(1)}s / ${(rep.duracionMs / 1000).toFixed(1)}s`}
+            </span>
+          </div>
+
           <div
             onClick={e => {
               const rect = e.currentTarget.getBoundingClientRect();
               const pc = (e.clientX - rect.left) / rect.width;
               rep.setCursor(Math.max(0, Math.min(1, pc)) * rep.duracionMs);
             }}
-            style={{ flex: 1, minWidth: 200, height: 6, background: '#e5e5e0', borderRadius: 3, position: 'relative', margin: '0 12px', cursor: 'pointer' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #0ea5e9, #6366f1)', borderRadius: 3, transition: 'width 0.05s linear' }} />
+            style={{ width: '100%', height: 16, background: '#e5e5e0', borderRadius: 8, position: 'relative', cursor: 'pointer', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #0ea5e9, #6366f1)', borderRadius: 8, transition: 'width 0.05s linear' }} />
+            {rep.eventosVirtuales.map((ev, i) => {
+              const left = rep.duracionMs > 0 ? (ev.offsetVirtualMs / rep.duracionMs) * 100 : 0;
+              const activo = i === rep.eventoActualIdx;
+              const pasado = i < rep.eventoActualIdx;
+              return (
+                <div key={i}
+                  title={`${ev.nombre} (${ev.modulo})`}
+                  style={{
+                    position: 'absolute', left: `${left}%`, top: 0, bottom: 0,
+                    width: activo ? 3 : 2,
+                    background: activo ? '#ef4444' : pasado ? '#ffffff' : '#64748b',
+                    transform: 'translateX(-50%)',
+                    pointerEvents: 'none',
+                  }} />
+              );
+            })}
           </div>
-          <span style={{ fontSize: 11, color: '#64748b', fontFamily: 'monospace', minWidth: 90, textAlign: 'right' }}>
-            {(rep.cursorMs / 1000).toFixed(1)}s / {(rep.duracionMs / 1000).toFixed(1)}s
-          </span>
         </div>
       )}
 
@@ -123,9 +183,10 @@ export default function SagaEnVivo() {
           {eventos.map((e, i) => {
             const activo = i === rep.eventoActualIdx;
             const pasado = i < rep.eventoActualIdx;
+            const virtOffset = rep.eventosVirtuales[i]?.offsetVirtualMs ?? e.offsetMs;
             return (
               <div key={i}
-                onClick={() => rep.setCursor(e.offsetMs)}
+                onClick={() => rep.setCursor(virtOffset)}
                 style={{
                   padding: '6px 8px', marginBottom: 4, borderRadius: 6, cursor: 'pointer',
                   borderLeft: `3px solid ${e.tipo === 'ComandoEnviado' ? '#3B82F6' : e.tipo === 'Completado' ? '#22c55e' : '#f59e0b'}`,
@@ -133,7 +194,9 @@ export default function SagaEnVivo() {
                   opacity: pasado ? 0.6 : 1,
                   transition: 'all 0.2s',
                 }}>
-                <div style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>{(e.offsetMs / 1000).toFixed(2)}s · {e.tipo === 'ComandoEnviado' ? 'cmd' : e.tipo === 'Completado' ? 'end' : 'evt'}</div>
+                <div style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>
+                  {rep.modo === 'pasos' ? `#${i + 1}` : `${(e.offsetMs / 1000).toFixed(2)}s`} · {e.tipo === 'ComandoEnviado' ? 'cmd' : e.tipo === 'Completado' ? 'end' : 'evt'}
+                </div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>{e.nombre}</div>
                 <div style={{ fontSize: 10, color: '#64748b' }}>{e.modulo}</div>
               </div>
@@ -152,6 +215,20 @@ function btn(color: string, disabled: boolean) {
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontSize: 12, fontWeight: 600,
     opacity: disabled ? 0.5 : 1,
+    transition: 'all 0.15s',
+  } as const;
+}
+
+function toggleBtn(active: boolean) {
+  return {
+    background: active ? '#0f172a' : 'transparent',
+    color: active ? '#fff' : '#64748b',
+    border: 'none',
+    padding: '4px 12px',
+    borderRadius: 4,
+    cursor: 'pointer',
+    fontSize: 11,
+    fontWeight: 600,
     transition: 'all 0.15s',
   } as const;
 }
