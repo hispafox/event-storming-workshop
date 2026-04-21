@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/infrastructure/">
+    <Project Path="infrastructure/CocinaServicio.AppHost/CocinaServicio.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="shared/CocinaServicio.Contracts/CocinaServicio.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/CocinaServicio.Api.Tests/CocinaServicio.Api.Tests.csproj" />
+    <Project Path="src/CocinaServicio.Api/CocinaServicio.Api.csproj" />
+  </Folder>
+</Solution>
