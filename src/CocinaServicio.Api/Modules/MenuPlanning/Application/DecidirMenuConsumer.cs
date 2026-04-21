@@ -21,12 +21,12 @@ public class DecidirMenuConsumer : IConsumer<DecidirMenu>
         var msg = context.Message;
         _logger.LogInformation("Decidiendo menú para correlación {CorrelationId}", msg.CorrelationId);
 
+        var posibles = await _inventory.GetPlatosPorDefectoAsync(conBebida: false, context.CancellationToken);
+        await context.Publish(new NeveraConsultada(msg.CorrelationId, posibles.Count, DateTime.UtcNow), context.CancellationToken);
+
         await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
 
-        var platos = msg.PlatosDeseados.Count > 0
-            ? msg.PlatosDeseados
-            : await _inventory.GetPlatosPorDefectoAsync(conBebida: false, context.CancellationToken);
-
+        var platos = msg.PlatosDeseados.Count > 0 ? msg.PlatosDeseados : posibles;
         var menuId = msg.CorrelationId;
 
         await context.Publish(new MenuDecidido(menuId, platos, msg.DestinoPreferido), context.CancellationToken);

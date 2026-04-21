@@ -239,12 +239,14 @@ public class SagaRecorder : ISagaRecorder, IDisposable
     private static string ResolverModulo(string nombre) => nombre switch
     {
         "DecidirMenu" or "MenuDecidido" => "MenuPlanning",
-        "CocinarComida" or "ComidaPreparada" or "ComidaQuemada" => "Kitchen",
+        "CocinarComida" or "ComidaPreparada" or "ComidaQuemada" or "DescartarComida" => "Kitchen",
         "RerouteDestino" or "DestinoNoDisponible" => "Routing",
         "PrepararBandeja" or "BandejaComedorPreparada" or "BandejaCamaPreparada" or "BandejaNoDisponible" or "MantenerCaliente" or "RetornarBandeja" => "TrayAssembly",
         "LlevarBandeja" or "ComidaServidaEnComedor" or "ComidaServidaEnCama" or "DerrameEnTransporte" or "ComidaConsumida" => "Delivery",
         "IniciarLimpieza" or "BandejaRecogida" or "CocinaDespejada" => "Cleanup",
-        "DescartarComida" => "Kitchen",
+        "NeveraConsultada" => "Nevera",
+        "HornoEncendido" or "HornoApagado" => "Horno",
+        "LavavajillasIniciado" or "LavavajillasTerminado" => "Lavavajillas",
         _ => "Unknown"
     };
 }

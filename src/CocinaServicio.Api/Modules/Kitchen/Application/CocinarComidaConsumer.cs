@@ -29,15 +29,20 @@ public class CocinarComidaConsumer : IConsumer<CocinarComida>
         var msg = context.Message;
         _logger.LogInformation("Cocinando para menú {MenuId}", msg.MenuId);
 
+        await context.Publish(new HornoEncendido(msg.MenuId, DateTime.UtcNow), context.CancellationToken);
+
         if (_failureInjector.DebeFallar("Cooking", out var tipo))
         {
             _failureInjector.Consumir("Cooking");
             await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+            await context.Publish(new HornoApagado(msg.MenuId, DateTime.UtcNow), context.CancellationToken);
             await context.Publish(new ComidaQuemada(msg.MenuId, Guid.NewGuid(), tipo), context.CancellationToken);
             return;
         }
 
         await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+
+        await context.Publish(new HornoApagado(msg.MenuId, DateTime.UtcNow), context.CancellationToken);
 
         var tieneBebida = msg.Platos.Any(p => p.EsLiquido);
         var destino = Destino.Comedor;

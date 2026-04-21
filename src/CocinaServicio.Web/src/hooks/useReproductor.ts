@@ -17,6 +17,9 @@ const MAPA_SERVICIOS: Record<string, ServicioId> = {
   LlevarBandeja: 'delivery', ComidaServidaEnComedor: 'delivery', ComidaServidaEnCama: 'delivery',
   DerrameEnTransporte: 'delivery', ComidaConsumida: 'delivery',
   IniciarLimpieza: 'cleanup', BandejaRecogida: 'cleanup', CocinaDespejada: 'cleanup',
+  NeveraConsultada: 'nevera',
+  HornoEncendido: 'hornoVitro', HornoApagado: 'hornoVitro',
+  LavavajillasIniciado: 'lavavajillas', LavavajillasTerminado: 'lavavajillas',
 };
 
 const MAPA_EVENTOS: Record<string, EventoId> = {
@@ -38,6 +41,11 @@ const MAPA_COMPENSACIONES: Record<string, CompensacionId> = {
   RetornarBandeja: 'RetornarBandeja',
 };
 
+const PARES_EXTERNO: Record<string, { fin: string; servicio: ServicioId }> = {
+  HornoEncendido: { fin: 'HornoApagado', servicio: 'hornoVitro' },
+  LavavajillasIniciado: { fin: 'LavavajillasTerminado', servicio: 'lavavajillas' },
+};
+
 function calcularEstado(eventos: EventoGrabado[], cursorMs: number): EstadoDiagrama {
   const servicios: EstadoDiagrama['servicios'] = {};
   const eventosActivos: EstadoDiagrama['eventos'] = {};
@@ -47,6 +55,17 @@ function calcularEstado(eventos: EventoGrabado[], cursorMs: number): EstadoDiagr
     if (ev.offsetMs > cursorMs) break;
 
     const enResaltado = cursorMs - ev.offsetMs <= RESALTADO_MS;
+
+    const par = PARES_EXTERNO[ev.nombre];
+    if (par) {
+      const fin = eventos.find(e => e.nombre === par.fin && e.offsetMs > ev.offsetMs);
+      const finAlcanzado = fin !== undefined && fin.offsetMs <= cursorMs;
+      servicios[par.servicio] = finAlcanzado ? 'completed' : 'active';
+      continue;
+    }
+    if (Object.values(PARES_EXTERNO).some(p => p.fin === ev.nombre)) {
+      continue;
+    }
 
     const servicio = MAPA_SERVICIOS[ev.nombre];
     if (servicio) {

@@ -18,7 +18,11 @@ public class IniciarLimpiezaConsumer : IConsumer<IniciarLimpieza>
         var msg = context.Message;
         _logger.LogInformation("Iniciando limpieza de bandeja {BandejaId}", msg.BandejaId);
 
+        await context.Publish(new LavavajillasIniciado(msg.BandejaId, DateTime.UtcNow), context.CancellationToken);
+
         await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
+
+        await context.Publish(new LavavajillasTerminado(msg.BandejaId, DateTime.UtcNow), context.CancellationToken);
 
         var bandejaUsadaId = Guid.NewGuid();
         await context.Publish(new BandejaRecogida(bandejaUsadaId, msg.BandejaId), context.CancellationToken);

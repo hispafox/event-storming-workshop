@@ -7,7 +7,7 @@ export type EstadoEvento = 'pending' | 'firing' | 'done';
 export type ServicioId =
   | 'inventory' | 'menuPlanning' | 'kitchen' | 'routing'
   | 'trayAssembly' | 'delivery' | 'cleanup'
-  | 'hornoVitro' | 'lavavajillas';
+  | 'nevera' | 'hornoVitro' | 'lavavajillas';
 
 export type EventoId =
   | 'MenuDecidido' | 'ComidaPreparada' | 'ElegirDestino'
@@ -214,10 +214,14 @@ export default function DiagramaArquitectura({ estado = emptyEstado, titulo = 'C
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', maxWidth: 640, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', maxWidth: 720, justifyContent: 'center' }}>
           <SideService className="gray" name="Inventory service" sub="soporte" estado={s('inventory')} />
           <span style={{ fontSize: 11, color: COLORS.sync, fontWeight: 700 }}>sync →</span>
           <Servicio className="green" name="Menu planning service" sub="planificación" estado={s('menuPlanning')} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 20, height: 1, background: `repeating-linear-gradient(90deg, ${COLORS.ext} 0 3px, transparent 3px 6px)` }} />
+            <SideService className="coral" name="Nevera / despensa" sub="externo sync" estado={s('nevera')} />
+          </div>
         </div>
 
         <Connector eventName="MenuDecidido" type="async" estado={e('MenuDecidido')} />
