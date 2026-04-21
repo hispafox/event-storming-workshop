@@ -25,12 +25,12 @@ public class LlevarBandejaConsumer : IConsumer<LlevarBandeja>
         if (_failureInjector.DebeFallar("Delivering", out _))
         {
             _failureInjector.Consumir("Delivering");
-            await Task.Delay(TimeSpan.FromSeconds(1), context.CancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
             await context.Publish(new DerrameEnTransporte(msg.BandejaId, msg.Destino), context.CancellationToken);
             return;
         }
 
-        await Task.Delay(TimeSpan.FromSeconds(1.5), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
 
         var ahora = DateTime.UtcNow;
         if (msg.Destino == Destino.Comedor)
@@ -38,7 +38,7 @@ public class LlevarBandejaConsumer : IConsumer<LlevarBandeja>
         else
             await context.Publish(new ComidaServidaEnCama(msg.BandejaId, ahora), context.CancellationToken);
 
-        await Task.Delay(TimeSpan.FromSeconds(2.5), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
         await context.Publish(new ComidaConsumida(msg.BandejaId, DateTime.UtcNow), context.CancellationToken);
     }
 }

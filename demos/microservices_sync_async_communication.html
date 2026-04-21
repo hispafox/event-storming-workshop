@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microservicios - Comunicaciones + Saga</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1e293b; padding: 20px 16px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; padding: 12px 16px; background: #fff; border-radius: 10px; border: 1px solid #00000009; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #64748b; font-weight: 600; }
+  .legend-line { width: 28px; height: 2px; border-radius: 1px; }
+  .l-sync { background: #185FA5; }
+  .l-async { background: repeating-linear-gradient(90deg, #BA7517 0 6px, transparent 6px 9px); }
+  .l-ext { background: repeating-linear-gradient(90deg, #993C1D 0 3px, transparent 3px 6px); }
+  .l-comp { background: repeating-linear-gradient(90deg, #A32D2D 0 2px, transparent 2px 5px); }
+  .saga-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: #FCEBEB; color: #A32D2D; border: 1px solid #A32D2D44; }
+
+  .pipeline { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+  .service-row { display: flex; align-items: center; gap: 16px; width: 100%; max-width: 640px; justify-content: center; position: relative; }
+
+  .service { padding: 14px 20px; border-radius: 10px; border: 1px solid; min-width: 220px; text-align: center; position: relative; }
+  .service .name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .service .sub { font-size: 11px; opacity: 0.7; }
+
+  .s-green { background: #EAF3DE; border-color: #3B6D11; color: #27500A; }
+  .s-teal { background: #E1F5EE; border-color: #0F6E56; color: #085041; }
+  .s-purple { background: #EEEDFE; border-color: #534AB7; color: #3C3489; }
+  .s-gray { background: #F1EFE8; border-color: #5F5E5A; color: #444441; }
+  .s-coral { background: #FAECE7; border-color: #993C1D; color: #712B13; }
+
+  .connector { display: flex; flex-direction: column; align-items: center; padding: 6px 0; gap: 2px; }
+  .connector .event-name { font-size: 11px; color: #64748b; font-weight: 500; }
+  .connector .comm-type { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; }
+  .ct-async { background: #BA751712; color: #BA7517; }
+  .ct-sync { background: #185FA512; color: #185FA5; }
+  .arrow-down { width: 2px; height: 16px; position: relative; }
+  .arrow-down::after { content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; }
+  .ad-async { background: repeating-linear-gradient(180deg, #BA7517 0 5px, transparent 5px 8px); }
+  .ad-async::after { border-top: 6px solid #BA7517; }
+  .ad-sync { background: #185FA5; }
+  .ad-sync::after { border-top: 6px solid #185FA5; }
+
+  .side-service { padding: 10px 14px; border-radius: 8px; border: 1px solid; text-align: center; min-width: 140px; }
+  .side-service .name { font-size: 12px; font-weight: 600; }
+  .side-service .sub { font-size: 10px; opacity: 0.65; }
+
+  .side-arrow { font-size: 14px; color: #993C1D; }
+
+  .saga-boundary { border: 2px dashed #A32D2D88; border-radius: 16px; padding: 20px 14px; margin: 0 auto; background: #A32D2D05; position: relative; max-width: 480px; width: 100%; }
+  .saga-label { position: absolute; top: -11px; left: 20px; background: #f5f5f0; padding: 0 8px; font-size: 12px; font-weight: 600; color: #A32D2D; }
+
+  .compensation-panel { margin-top: 20px; padding: 16px 20px; background: #FCEBEB88; border: 1px solid #A32D2D33; border-radius: 10px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .compensation-panel h3 { font-size: 14px; color: #791F1F; margin-bottom: 10px; font-weight: 600; }
+  .comp-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; font-size: 12px; color: #A32D2D; line-height: 1.5; }
+  .comp-step { font-weight: 700; min-width: 52px; flex-shrink: 0; }
+  .comp-arrow { color: #791F1F; flex-shrink: 0; }
+
+  .ext-connector { display: flex; align-items: center; gap: 8px; }
+  .ext-line { width: 20px; height: 1px; background: repeating-linear-gradient(90deg, #993C1D 0 3px, transparent 3px 6px); }
+  .ext-label { font-size: 10px; color: #993C1D; font-weight: 600; }
+
+  .comp-indicator { position: absolute; left: -28px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .comp-arrow-up { width: 2px; height: 20px; background: repeating-linear-gradient(180deg, #A32D2D 0 2px, transparent 2px 5px); }
+  .comp-label { font-size: 9px; color: #A32D2D; font-weight: 600; text-align: right; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.3px; }
+
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<h1>Comunicaciones entre microservicios</h1>
+<p class="subtitle">Sync / async + patron saga con compensaciones</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-line l-sync"></div> sync</div>
+  <div class="legend-item"><div class="legend-line l-async"></div> async</div>
+  <div class="legend-item"><div class="legend-line l-ext"></div> externo</div>
+  <div class="legend-item"><div class="legend-line l-comp"></div> compensacion</div>
+  <div class="legend-item"><span class="saga-badge">saga boundary</span></div>
+</div>
+
+<div class="pipeline">
+
+  <!-- Menu Planning + Inventory -->
+  <div class="service-row">
+    <div class="side-service s-gray">
+      <div class="name">Inventory service</div>
+      <div class="sub">soporte</div>
+    </div>
+    <span style="font-size:11px; color:#185FA5; font-weight:700;">sync →</span>
+    <div class="service s-green">
+      <div class="name">Menu planning service</div>
+      <div class="sub">planificacion</div>
+    </div>
+  </div>
+
+  <div class="connector">
+    <div class="arrow-down ad-async"></div>
+    <span class="event-name">MenuDecidido</span>
+    <span class="comm-type ct-async">async</span>
+  </div>
+
+  <!-- SAGA BOUNDARY -->
+  <div class="saga-boundary">
+    <span class="saga-label">SAGA: Preparar y servir comida (coreografia)</span>
+
+    <!-- Step 1: Kitchen -->
+    <div class="service-row">
+      <div class="service s-teal" style="flex:1; max-width: 280px;">
+        <div class="name">Kitchen service</div>
+        <div class="sub">core — saga step 1</div>
+      </div>
+      <div class="ext-connector">
+        <div class="ext-line"></div>
+        <div class="side-service s-coral" style="min-width:110px;">
+          <div class="name">Horno / vitro</div>
+          <div class="sub">externo sync</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="arrow-down ad-async"></div>
+      <span class="event-name">ComidaPreparada</span>
+      <span class="comm-type ct-async">async</span>
+    </div>
+
+    <!-- Step 2: Routing -->
+    <div class="service-row" style="position:relative;">
+      <div style="position:absolute; left:-10px; top:50%; transform:translateY(-50%); text-align:right;">
+        <div style="font-size:9px; color:#A32D2D; font-weight:600; line-height:1.3;">Replanificar<br>menu ↑</div>
+      </div>
+      <div class="service s-purple" style="flex:1; max-width: 280px;">
+        <div class="name">Routing service</div>
+        <div class="sub">decision — saga step 2</div>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="arrow-down ad-sync"></div>
+      <span class="event-name">ElegirDestino</span>
+      <span class="comm-type ct-sync">sync</span>
+    </div>
+
+    <!-- Step 3: Tray Assembly -->
+    <div class="service-row" style="position:relative;">
+      <div style="position:absolute; left:-10px; top:50%; transform:translateY(-50%); text-align:right;">
+        <div style="font-size:9px; color:#A32D2D; font-weight:600; line-height:1.3;">Mantener<br>caliente ↑</div>
+      </div>
+      <div class="service s-teal" style="flex:1; max-width: 280px;">
+        <div class="name">Tray assembly service</div>
+        <div class="sub">core — saga step 3</div>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="arrow-down ad-async"></div>
+      <span class="event-name">BandejaPreparada</span>
+      <span class="comm-type ct-async">async</span>
+    </div>
+
+    <!-- Step 4: Delivery -->
+    <div class="service-row" style="position:relative;">
+      <div style="position:absolute; left:-10px; top:50%; transform:translateY(-50%); text-align:right;">
+        <div style="font-size:9px; color:#A32D2D; font-weight:600; line-height:1.3;">Retornar<br>bandeja ↑</div>
+      </div>
+      <div class="service s-teal" style="flex:1; max-width: 280px;">
+        <div class="name">Delivery service</div>
+        <div class="sub">core — saga step 4</div>
+      </div>
+    </div>
+
+  </div>
+  <!-- END SAGA BOUNDARY -->
+
+  <div class="connector">
+    <div class="arrow-down ad-async"></div>
+    <span class="event-name">ComidaConsumida</span>
+    <span class="comm-type ct-async">async</span>
+  </div>
+
+  <!-- Cleanup + Lavavajillas -->
+  <div class="service-row">
+    <div class="service s-teal">
+      <div class="name">Cleanup service</div>
+      <div class="sub">core</div>
+    </div>
+    <div class="ext-connector">
+      <div class="ext-line"></div>
+      <div class="side-service s-coral" style="min-width:110px;">
+        <div class="name">Lavavajillas</div>
+        <div class="sub">externo async</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector">
+    <div class="arrow-down ad-async"></div>
+    <span class="event-name">CocinaDespejada</span>
+    <span class="comm-type ct-async">async</span>
+  </div>
+
+  <div style="font-size:11px; color:#64748b; padding: 6px 14px; background:#fff; border-radius:6px; border:1px solid #00000009;">
+    ↻ Ciclo completo — cocina lista para el siguiente servicio
+  </div>
+
+</div>
+
+<!-- Compensation table -->
+<div class="compensation-panel">
+  <h3>Compensaciones de la saga</h3>
+  <div class="comp-row">
+    <span class="comp-step">Step 4 ✗</span>
+    <span>Derrame en transporte → <strong>RetornarBandeja</strong> → DesmontarBandeja → ReplanificarMenu</span>
+  </div>
+  <div class="comp-row">
+    <span class="comp-step">Step 3 ✗</span>
+    <span>Sin bandeja disponible → <strong>MantenerCaliente</strong> en Kitchen → lanzar Cleanup urgente</span>
+  </div>
+  <div class="comp-row">
+    <span class="comp-step">Step 2 ✗</span>
+    <span>Destino no disponible → <strong>Reroute</strong> al destino alternativo (comedor ↔ cama)</span>
+  </div>
+  <div class="comp-row">
+    <span class="comp-step">Step 1 ✗</span>
+    <span>Comida quemada → <strong>DescartarComida</strong> → volver a MenuDecidido (menú simplificado)</span>
+  </div>
+</div>
+
+</body>
+</html>

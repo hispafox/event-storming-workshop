@@ -375,7 +375,6 @@ Program.cs
  WindowsBase.dll
 <NUGET>/
  aspire.hosting.apphost/13.2.2/lib/net10.0/Aspire.Hosting.AppHost.dll
- aspire.hosting.nodejs/9.5.2/lib/net8.0/Aspire.Hosting.NodeJs.dll
  aspire.hosting/13.2.2/lib/net8.0/Aspire.Hosting.dll
  aspnetcore.healthchecks.uris/9.0.0/lib/net8.0/HealthChecks.Uris.dll
  fractions/7.3.0/lib/netstandard2.1/Fractions.dll

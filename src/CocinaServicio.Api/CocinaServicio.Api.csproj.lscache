@@ -407,8 +407,8 @@ Sagas/
  System.Xml.XPath.XDocument.dll
  WindowsBase.dll
 <NUGET>/
- masstransit.abstractions/9.1.0/lib/net10.0/MassTransit.Abstractions.dll
- masstransit/9.1.0/lib/net10.0/MassTransit.dll
+ masstransit.abstractions/8.5.2/lib/net9.0/MassTransit.Abstractions.dll
+ masstransit/8.5.2/lib/net9.0/MassTransit.dll
 
 [analyzerReferences]
 <DOTNET>/packs/Microsoft.AspNetCore.App.Ref/10.0.5/analyzers/dotnet/cs/

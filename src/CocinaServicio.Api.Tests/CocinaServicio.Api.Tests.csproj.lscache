@@ -373,8 +373,8 @@ SagaTests.cs
  System.Xml.XPath.XDocument.dll
  WindowsBase.dll
 <NUGET>/
- masstransit.abstractions/9.1.0/lib/net10.0/MassTransit.Abstractions.dll
- masstransit/9.1.0/lib/net10.0/MassTransit.dll
+ masstransit.abstractions/8.5.2/lib/net9.0/MassTransit.Abstractions.dll
+ masstransit/8.5.2/lib/net9.0/MassTransit.dll
  microsoft.codecoverage/17.14.1/lib/net8.0/Microsoft.VisualStudio.CodeCoverage.Shim.dll
  microsoft.extensions.dependencyinjection.abstractions/10.0.6/lib/net10.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
  microsoft.extensions.dependencyinjection/10.0.6/lib/net10.0/Microsoft.Extensions.DependencyInjection.dll

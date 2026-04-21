@@ -18,7 +18,7 @@ public class IniciarLimpiezaConsumer : IConsumer<IniciarLimpieza>
         var msg = context.Message;
         _logger.LogInformation("Iniciando limpieza de bandeja {BandejaId}", msg.BandejaId);
 
-        await Task.Delay(TimeSpan.FromSeconds(2), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
 
         var bandejaUsadaId = Guid.NewGuid();
         await context.Publish(new BandejaRecogida(bandejaUsadaId, msg.BandejaId), context.CancellationToken);

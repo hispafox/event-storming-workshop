@@ -32,12 +32,12 @@ public class CocinarComidaConsumer : IConsumer<CocinarComida>
         if (_failureInjector.DebeFallar("Cooking", out var tipo))
         {
             _failureInjector.Consumir("Cooking");
-            await Task.Delay(TimeSpan.FromSeconds(1), context.CancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
             await context.Publish(new ComidaQuemada(msg.MenuId, Guid.NewGuid(), tipo), context.CancellationToken);
             return;
         }
 
-        await Task.Delay(TimeSpan.FromSeconds(2.5), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
 
         var tieneBebida = msg.Platos.Any(p => p.EsLiquido);
         var destino = Destino.Comedor;

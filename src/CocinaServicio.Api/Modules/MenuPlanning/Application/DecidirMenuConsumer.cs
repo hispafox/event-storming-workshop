@@ -21,7 +21,7 @@ public class DecidirMenuConsumer : IConsumer<DecidirMenu>
         var msg = context.Message;
         _logger.LogInformation("Decidiendo menú para correlación {CorrelationId}", msg.CorrelationId);
 
-        await Task.Delay(TimeSpan.FromSeconds(1), context.CancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(7), context.CancellationToken);
 
         var platos = msg.PlatosDeseados.Count > 0
             ? msg.PlatosDeseados
