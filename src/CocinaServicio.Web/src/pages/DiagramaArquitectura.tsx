@@ -125,10 +125,12 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
   const activo = firing || done;
   const SVG_H = 56;
 
-  const dur = firing ? '0.8s' : '2.2s';
-  const lineOpacity = firing ? 1 : done ? 0.85 : 0.4;
-  const arrowOpacity = firing ? 1 : done ? 0.9 : 0.5;
-  const particleR = firing ? 5 : 3.5;
+  const dur = firing ? '0.8s' : '1.4s';
+  const lineOpacity = firing ? 1 : done ? 0.95 : 0.25;
+  const arrowOpacity = firing ? 1 : done ? 0.95 : 0.35;
+  const particleR = firing ? 5 : 4.5;
+  const p1Opacity = firing ? 0.95 : 0.85;
+  const p2Opacity = firing ? 0.75 : 0.6;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 0', gap: 2 }}>
@@ -136,7 +138,7 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
         <line
           x1={12} y1={2} x2={12} y2={SVG_H - 6}
           stroke={color}
-          strokeWidth={firing ? 2.5 : 2}
+          strokeWidth={firing ? 3 : done ? 2.5 : 2}
           strokeDasharray={type === 'async' ? '5,3' : undefined}
           opacity={lineOpacity}
         />
@@ -147,22 +149,22 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
         />
         {activo && (
           <>
-            <circle r={particleR} fill={color} opacity={firing ? 0.95 : 0.55}>
+            <circle r={particleR} fill={color} opacity={p1Opacity}>
               <animate attributeName="cy" from={2} to={SVG_H - 6} dur={dur} repeatCount="indefinite" />
               <animate attributeName="opacity"
-                values={firing ? '0;1;1;0' : '0;0.55;0.55;0'}
+                values={`0;${p1Opacity};${p1Opacity};0`}
                 keyTimes="0;0.15;0.85;1" dur={dur} repeatCount="indefinite" />
               <animateTransform attributeName="transform" type="translate" values="12,0" dur={dur} repeatCount="indefinite" />
             </circle>
-            <circle r={particleR - 1} fill={color} opacity={firing ? 0.7 : 0.4}>
+            <circle r={particleR - 1} fill={color} opacity={p2Opacity}>
               <animate attributeName="cy" from={2} to={SVG_H - 6} dur={dur}
-                begin={firing ? '0.25s' : '0.7s'} repeatCount="indefinite" />
+                begin={firing ? '0.25s' : '0.45s'} repeatCount="indefinite" />
               <animate attributeName="opacity"
-                values={firing ? '0;0.7;0.7;0' : '0;0.4;0.4;0'}
+                values={`0;${p2Opacity};${p2Opacity};0`}
                 keyTimes="0;0.15;0.85;1" dur={dur}
-                begin={firing ? '0.25s' : '0.7s'} repeatCount="indefinite" />
+                begin={firing ? '0.25s' : '0.45s'} repeatCount="indefinite" />
               <animateTransform attributeName="transform" type="translate" values="12,0" dur={dur}
-                begin={firing ? '0.25s' : '0.7s'} repeatCount="indefinite" />
+                begin={firing ? '0.25s' : '0.45s'} repeatCount="indefinite" />
             </circle>
             {firing && (
               <circle r={3} fill={color} opacity={0.5}>
