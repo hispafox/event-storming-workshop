@@ -77,9 +77,17 @@ public static class DemoEndpoints
         });
 
         demo.MapGet("/recordings", (ISagaRecorder recorder) =>
-            Results.Ok(recorder.ListarRecientes()));
+            Results.Ok(recorder.Listar()));
+
+        demo.MapDelete("/recording/{correlationId:guid}", (Guid correlationId, ISagaRecorder recorder) =>
+            recorder.Borrar(correlationId) ? Results.NoContent() : Results.NotFound());
+
+        demo.MapPost("/recording/{correlationId:guid}/label", (Guid correlationId, EtiquetaRequest req, ISagaRecorder recorder) =>
+            recorder.Etiquetar(correlationId, req.Etiqueta) ? Results.Ok() : Results.NotFound());
     }
 }
+
+public record EtiquetaRequest(string Etiqueta);
 
 public record IniciarFlujoRequest(Destino Destino, bool ConBebida);
 public record SimulateFailureRequest(string Step, string FailureType);

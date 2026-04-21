@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import EventStormingBoard from './pages/EventStormingBoard';
 import DiagramaArquitectura from './pages/DiagramaArquitectura';
+import SagaEnVivo from './pages/SagaEnVivo';
 
 type Tab = 'storming' | 'arquitectura' | 'saga';
 
@@ -60,13 +61,7 @@ export default function App() {
       <main style={{ flex: 1, overflow: 'auto' }}>
         {tab === 'storming' && <EventStormingBoard />}
         {tab === 'arquitectura' && <DiagramaArquitectura />}
-        {tab === 'saga' && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🚧</div>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Saga en vivo — reproductor diferido</div>
-            <div style={{ fontSize: 13 }}>En construcción. Usa el mismo diagrama de Arquitectura con animación al estilo ByteByteGo.</div>
-          </div>
-        )}
+        {tab === 'saga' && <SagaEnVivo />}
       </main>
     </div>
   );

@@ -121,22 +121,42 @@ function SideService({
 function Connector({ eventName, type, estado = 'pending' }: { eventName: string; type: 'sync' | 'async'; estado?: EstadoEvento }) {
   const color = type === 'sync' ? COLORS.sync : COLORS.async;
   const firing = estado === 'firing';
+  const SVG_H = 56;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0', gap: 2 }}>
-      <div style={{
-        width: 2, height: 16, position: 'relative',
-        background: type === 'async'
-          ? `repeating-linear-gradient(180deg, ${color} 0 5px, transparent 5px 8px)`
-          : color,
-      }}>
-        <div style={{
-          content: '""',
-          position: 'absolute',
-          bottom: -4, left: '50%', transform: 'translateX(-50%)',
-          borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
-          borderTop: `6px solid ${color}`,
-        }} />
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 0', gap: 2 }}>
+      <svg width={24} height={SVG_H} style={{ overflow: 'visible' }}>
+        <line
+          x1={12} y1={2} x2={12} y2={SVG_H - 6}
+          stroke={color}
+          strokeWidth={2}
+          strokeDasharray={type === 'async' ? '5,3' : undefined}
+          opacity={firing ? 0.9 : 0.5}
+        />
+        <polygon
+          points={`7,${SVG_H - 6} 17,${SVG_H - 6} 12,${SVG_H}`}
+          fill={color}
+          opacity={firing ? 1 : 0.6}
+        />
+        {firing && (
+          <>
+            <circle r={5} fill={color} opacity={0.95}>
+              <animate attributeName="cy" from={2} to={SVG_H - 6} dur="1s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="1s" repeatCount="indefinite" />
+              <animateTransform attributeName="transform" type="translate" values="12,0" dur="1s" repeatCount="indefinite" />
+            </circle>
+            <circle r={4} fill={color} opacity={0.7}>
+              <animate attributeName="cy" from={2} to={SVG_H - 6} dur="1s" begin="0.3s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0;0.7;0.7;0" keyTimes="0;0.15;0.85;1" dur="1s" begin="0.3s" repeatCount="indefinite" />
+              <animateTransform attributeName="transform" type="translate" values="12,0" dur="1s" begin="0.3s" repeatCount="indefinite" />
+            </circle>
+            <circle r={3} fill={color} opacity={0.5}>
+              <animate attributeName="cy" from={2} to={SVG_H - 6} dur="1s" begin="0.6s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.15;0.85;1" dur="1s" begin="0.6s" repeatCount="indefinite" />
+              <animateTransform attributeName="transform" type="translate" values="12,0" dur="1s" begin="0.6s" repeatCount="indefinite" />
+            </circle>
+          </>
+        )}
+      </svg>
       <span style={{
         fontSize: 11,
         color: firing ? color : COLORS.muted,
