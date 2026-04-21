@@ -1,5 +1,7 @@
 namespace CocinaServicio.Contracts.Events;
 
+public record CatalogoConsultado(Guid MenuId, int PlatosPosibles, DateTime Cuando);
+
 public record NeveraConsultada(Guid MenuId, int IngredientesDisponibles, DateTime Cuando);
 
 public record HornoEncendido(Guid MenuId, DateTime Cuando);

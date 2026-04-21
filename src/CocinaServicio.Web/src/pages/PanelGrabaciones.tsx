@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { borrarGrabacion, etiquetarGrabacion, listarGrabaciones, type GrabacionResumen } from '../services/api';
 
 type Props = {
@@ -12,17 +12,28 @@ export default function PanelGrabaciones({ activa, onCargar, refreshToken }: Pro
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
   const [borrador, setBorrador] = useState('');
+  const grabacionesRef = useRef<GrabacionResumen[]>([]);
 
   const recargar = async () => {
     try {
       const lista = await listarGrabaciones();
       setGrabaciones(lista);
+      grabacionesRef.current = lista;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
     }
   };
 
   useEffect(() => { recargar(); }, [refreshToken]);
+
+  // Auto-refresh cada 2s mientras haya alguna grabación sin completar
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const hayPendiente = grabacionesRef.current.some(g => !g.completado);
+      if (hayPendiente) recargar();
+    }, 2000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const onBorrar = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();

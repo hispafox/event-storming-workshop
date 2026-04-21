@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import DiagramaArquitectura from './DiagramaArquitectura';
 import PanelGrabaciones from './PanelGrabaciones';
 import { iniciarFlujo, obtenerGrabacion, simularFallo, type Grabacion } from '../services/api';
@@ -15,76 +15,40 @@ const VELOCIDADES = [0.5, 1, 2, 4];
 
 export default function SagaEnVivo() {
   const [grabacion, setGrabacion] = useState<Grabacion | null>(null);
-  const [cargando, setCargando] = useState(false);
+  const [lanzando, setLanzando] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fallo, setFallo] = useState(FALLOS[0].value);
   const [refreshPanel, setRefreshPanel] = useState(0);
-  const pollingRef = useRef<number | null>(null);
 
   const rep = useReproductor(grabacion);
 
-  useEffect(() => () => {
-    if (pollingRef.current !== null) window.clearInterval(pollingRef.current);
-  }, []);
-
-  const pararPolling = () => {
-    if (pollingRef.current !== null) {
-      window.clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-  };
-
-  const iniciarYGrabar = async (disparador: () => Promise<{ correlationId: string }>) => {
+  const dispararSaga = async (disparador: () => Promise<{ correlationId: string }>) => {
     try {
       setError(null);
-      setCargando(true);
-      setGrabacion(null);
+      setLanzando(true);
       const { correlationId } = await disparador();
-
-      pararPolling();
-      pollingRef.current = window.setInterval(async () => {
-        try {
-          const g = await obtenerGrabacion(correlationId);
-          if (!g) return;
-          setGrabacion(g);
-          if (g.completado) {
-            pararPolling();
-            setCargando(false);
-            setRefreshPanel(x => x + 1);
-          }
-        } catch (e) {
-          console.error('Error polling', e);
-        }
-      }, 300);
-
-      window.setTimeout(() => {
-        if (pollingRef.current !== null) {
-          pararPolling();
-          setCargando(false);
-          setRefreshPanel(x => x + 1);
-        }
-      }, 90000);
+      setAviso(`Saga lanzada (${correlationId.slice(0, 8)}). Aparecerá en el panel al terminar.`);
+      setRefreshPanel(x => x + 1);
+      window.setTimeout(() => setAviso(null), 4000);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
-      setCargando(false);
+    } finally {
+      setLanzando(false);
     }
   };
 
-  const onComedor = () => iniciarYGrabar(() => iniciarFlujo('Comedor', false));
-  const onCama = () => iniciarYGrabar(() => iniciarFlujo('Cama', true));
-  const onFallo = () => iniciarYGrabar(() => simularFallo(fallo));
+  const onComedor = () => dispararSaga(() => iniciarFlujo('Comedor', false));
+  const onCama = () => dispararSaga(() => iniciarFlujo('Cama', true));
+  const onFallo = () => dispararSaga(() => simularFallo(fallo));
 
   const cargarGrabacion = async (correlationId: string) => {
     try {
-      pararPolling();
-      setCargando(true);
       setError(null);
       const g = await obtenerGrabacion(correlationId);
       setGrabacion(g);
-      setCargando(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
-      setCargando(false);
     }
   };
 
@@ -102,16 +66,16 @@ export default function SagaEnVivo() {
   return (
     <div style={{ minHeight: '100%', background: '#f5f5f0', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#fff', padding: '12px 16px', borderRadius: 10, border: '1px solid #00000009' }}>
-        <button onClick={onComedor} disabled={cargando} style={btn('#f59e0b', cargando)}>🍽 Servir en comedor</button>
-        <button onClick={onCama} disabled={cargando} style={btn('#8b5cf6', cargando)}>🛏 Servir en cama</button>
+        <button onClick={onComedor} disabled={lanzando} style={btn('#f59e0b', lanzando)}>🍽 Servir en comedor</button>
+        <button onClick={onCama} disabled={lanzando} style={btn('#8b5cf6', lanzando)}>🛏 Servir en cama</button>
         <span style={{ width: 1, height: 28, background: '#e5e5e0' }} />
         <span style={{ fontSize: 12, color: '#64748b' }}>Simular fallo:</span>
-        <select value={fallo} onChange={e => setFallo(e.target.value)} disabled={cargando}
+        <select value={fallo} onChange={e => setFallo(e.target.value)} disabled={lanzando}
           style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 12 }}>
           {FALLOS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
-        <button onClick={onFallo} disabled={cargando} style={btn('#ef4444', cargando)}>⚠ Simular</button>
-        {cargando && <span style={{ fontSize: 12, color: '#64748b', marginLeft: 'auto' }}>Grabando saga…</span>}
+        <button onClick={onFallo} disabled={lanzando} style={btn('#ef4444', lanzando)}>⚠ Simular</button>
+        {aviso && <span style={{ fontSize: 12, color: '#0ea5e9', marginLeft: 'auto' }}>{aviso}</span>}
         {error && <span style={{ fontSize: 12, color: '#ef4444', marginLeft: 'auto' }}>{error}</span>}
       </div>
 

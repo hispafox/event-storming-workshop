@@ -244,6 +244,7 @@ public class SagaRecorder : ISagaRecorder, IDisposable
         "PrepararBandeja" or "BandejaComedorPreparada" or "BandejaCamaPreparada" or "BandejaNoDisponible" or "MantenerCaliente" or "RetornarBandeja" => "TrayAssembly",
         "LlevarBandeja" or "ComidaServidaEnComedor" or "ComidaServidaEnCama" or "DerrameEnTransporte" or "ComidaConsumida" => "Delivery",
         "IniciarLimpieza" or "BandejaRecogida" or "CocinaDespejada" => "Cleanup",
+        "CatalogoConsultado" => "Inventory",
         "NeveraConsultada" => "Nevera",
         "HornoEncendido" or "HornoApagado" => "Horno",
         "LavavajillasIniciado" or "LavavajillasTerminado" => "Lavavajillas",

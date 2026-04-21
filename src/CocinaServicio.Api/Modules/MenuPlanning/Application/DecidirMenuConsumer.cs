@@ -21,6 +21,7 @@ public class DecidirMenuConsumer : IConsumer<DecidirMenu>
         var msg = context.Message;
         _logger.LogInformation("Decidiendo menú para correlación {CorrelationId}", msg.CorrelationId);
 
+        await context.Publish(new CatalogoConsultado(msg.CorrelationId, 0, DateTime.UtcNow), context.CancellationToken);
         var posibles = await _inventory.GetPlatosPorDefectoAsync(conBebida: false, context.CancellationToken);
         await context.Publish(new NeveraConsultada(msg.CorrelationId, posibles.Count, DateTime.UtcNow), context.CancellationToken);
 

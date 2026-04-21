@@ -17,6 +17,7 @@ const MAPA_SERVICIOS: Record<string, ServicioId> = {
   LlevarBandeja: 'delivery', ComidaServidaEnComedor: 'delivery', ComidaServidaEnCama: 'delivery',
   DerrameEnTransporte: 'delivery', ComidaConsumida: 'delivery',
   IniciarLimpieza: 'cleanup', BandejaRecogida: 'cleanup', CocinaDespejada: 'cleanup',
+  CatalogoConsultado: 'inventory',
   NeveraConsultada: 'nevera',
   HornoEncendido: 'hornoVitro', HornoApagado: 'hornoVitro',
   LavavajillasIniciado: 'lavavajillas', LavavajillasTerminado: 'lavavajillas',
