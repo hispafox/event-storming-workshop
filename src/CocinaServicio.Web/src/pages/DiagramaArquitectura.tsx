@@ -118,6 +118,15 @@ function SideService({
   );
 }
 
+const CONNECTOR_KEYFRAMES = `
+@keyframes flujoParticula {
+  0%   { transform: translateY(0px);  opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(50px); opacity: 0; }
+}
+`;
+
 function Connector({ eventName, type, estado = 'pending' }: { eventName: string; type: 'sync' | 'async'; estado?: EstadoEvento }) {
   const color = type === 'sync' ? COLORS.sync : COLORS.async;
   const firing = estado === 'firing';
@@ -125,12 +134,10 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
   const activo = firing || done;
   const SVG_H = 56;
 
-  const dur = firing ? '0.8s' : '1.4s';
+  const dur = firing ? 0.8 : 1.4;
   const lineOpacity = firing ? 1 : done ? 0.95 : 0.25;
   const arrowOpacity = firing ? 1 : done ? 0.95 : 0.35;
   const particleR = firing ? 5 : 4.5;
-  const p1Opacity = firing ? 0.95 : 0.85;
-  const p2Opacity = firing ? 0.75 : 0.6;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 0', gap: 2 }}>
@@ -149,29 +156,13 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
         />
         {activo && (
           <>
-            <circle r={particleR} fill={color} opacity={p1Opacity}>
-              <animate attributeName="cy" from={2} to={SVG_H - 6} dur={dur} repeatCount="indefinite" />
-              <animate attributeName="opacity"
-                values={`0;${p1Opacity};${p1Opacity};0`}
-                keyTimes="0;0.15;0.85;1" dur={dur} repeatCount="indefinite" />
-              <animateTransform attributeName="transform" type="translate" values="12,0" dur={dur} repeatCount="indefinite" />
-            </circle>
-            <circle r={particleR - 1} fill={color} opacity={p2Opacity}>
-              <animate attributeName="cy" from={2} to={SVG_H - 6} dur={dur}
-                begin={firing ? '0.25s' : '0.45s'} repeatCount="indefinite" />
-              <animate attributeName="opacity"
-                values={`0;${p2Opacity};${p2Opacity};0`}
-                keyTimes="0;0.15;0.85;1" dur={dur}
-                begin={firing ? '0.25s' : '0.45s'} repeatCount="indefinite" />
-              <animateTransform attributeName="transform" type="translate" values="12,0" dur={dur}
-                begin={firing ? '0.25s' : '0.45s'} repeatCount="indefinite" />
-            </circle>
+            <circle cx={12} cy={2} r={particleR} fill={color}
+              style={{ animation: `flujoParticula ${dur}s linear infinite`, opacity: 0 }} />
+            <circle cx={12} cy={2} r={particleR - 1} fill={color}
+              style={{ animation: `flujoParticula ${dur}s linear infinite`, animationDelay: `${dur * 0.33}s`, opacity: 0 }} />
             {firing && (
-              <circle r={3} fill={color} opacity={0.5}>
-                <animate attributeName="cy" from={2} to={SVG_H - 6} dur={dur} begin="0.5s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.15;0.85;1" dur={dur} begin="0.5s" repeatCount="indefinite" />
-                <animateTransform attributeName="transform" type="translate" values="12,0" dur={dur} begin="0.5s" repeatCount="indefinite" />
-              </circle>
+              <circle cx={12} cy={2} r={3} fill={color}
+                style={{ animation: `flujoParticula ${dur}s linear infinite`, animationDelay: `${dur * 0.66}s`, opacity: 0 }} />
             )}
           </>
         )}
@@ -220,6 +211,7 @@ export default function DiagramaArquitectura({ estado = emptyEstado, titulo = 'C
 
   return (
     <div style={{ background: COLORS.bg, minHeight: '100%', padding: '20px 16px', fontFamily: "'Segoe UI', system-ui, sans-serif", color: COLORS.text }}>
+      <style>{CONNECTOR_KEYFRAMES}</style>
       <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{titulo}</h1>
       <p style={{ fontSize: 12, color: COLORS.muted, marginBottom: 20 }}>Sync / async + patrón saga con compensaciones</p>
 
