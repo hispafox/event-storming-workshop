@@ -12,15 +12,18 @@ public class CocinarComidaConsumer : IConsumer<CocinarComida>
 {
     private readonly IComidaRepository _repository;
     private readonly IFailureInjector _failureInjector;
+    private readonly ISagaRecorder _recorder;
     private readonly ILogger<CocinarComidaConsumer> _logger;
 
     public CocinarComidaConsumer(
         IComidaRepository repository,
         IFailureInjector failureInjector,
+        ISagaRecorder recorder,
         ILogger<CocinarComidaConsumer> logger)
     {
         _repository = repository;
         _failureInjector = failureInjector;
+        _recorder = recorder;
         _logger = logger;
     }
 
@@ -29,20 +32,20 @@ public class CocinarComidaConsumer : IConsumer<CocinarComida>
         var msg = context.Message;
         _logger.LogInformation("Cocinando para menú {MenuId}", msg.MenuId);
 
-        await context.Publish(new HornoEncendido(msg.MenuId, DateTime.UtcNow), context.CancellationToken);
+        await context.PublishYGrabar(new HornoEncendido(msg.MenuId, DateTime.UtcNow), _recorder, msg.MenuId);
 
         if (_failureInjector.DebeFallar("Cooking", out var tipo))
         {
             _failureInjector.Consumir("Cooking");
             await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
-            await context.Publish(new HornoApagado(msg.MenuId, DateTime.UtcNow), context.CancellationToken);
-            await context.Publish(new ComidaQuemada(msg.MenuId, Guid.NewGuid(), tipo), context.CancellationToken);
+            await context.PublishYGrabar(new HornoApagado(msg.MenuId, DateTime.UtcNow), _recorder, msg.MenuId);
+            await context.PublishYGrabar(new ComidaQuemada(msg.MenuId, Guid.NewGuid(), tipo), _recorder, msg.MenuId);
             return;
         }
 
         await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
 
-        await context.Publish(new HornoApagado(msg.MenuId, DateTime.UtcNow), context.CancellationToken);
+        await context.PublishYGrabar(new HornoApagado(msg.MenuId, DateTime.UtcNow), _recorder, msg.MenuId);
 
         var tieneBebida = msg.Platos.Any(p => p.EsLiquido);
         var destino = Destino.Comedor;
@@ -50,8 +53,8 @@ public class CocinarComidaConsumer : IConsumer<CocinarComida>
         var comida = new Comida(msg.MenuId, msg.Platos);
         await _repository.AddAsync(comida, context.CancellationToken);
 
-        await context.Publish(
+        await context.PublishYGrabar(
             new ComidaPreparada(comida.Id, msg.MenuId, destino, tieneBebida),
-            context.CancellationToken);
+            _recorder, msg.MenuId);
     }
 }

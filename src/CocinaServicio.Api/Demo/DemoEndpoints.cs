@@ -15,14 +15,15 @@ public static class DemoEndpoints
             IniciarFlujoRequest req,
             IPublishEndpoint publisher,
             IInventoryService inventory,
+            ISagaRecorder recorder,
             CancellationToken ct) =>
         {
             var correlationId = Guid.NewGuid();
             var platos = await inventory.GetPlatosPorDefectoAsync(req.ConBebida, ct);
 
-            await publisher.Publish(
-                new DecidirMenu(correlationId, req.Destino, platos),
-                ct);
+            var cmd = new DecidirMenu(correlationId, req.Destino, platos);
+            recorder.Registrar(correlationId, TipoRegistro.ComandoEnviado, nameof(DecidirMenu), cmd);
+            await publisher.Publish(cmd, ct);
 
             return Results.Accepted($"/api/demo/saga/{correlationId}", new { correlationId });
         });
@@ -32,6 +33,7 @@ public static class DemoEndpoints
             IFailureInjector injector,
             IPublishEndpoint publisher,
             IInventoryService inventory,
+            ISagaRecorder recorder,
             CancellationToken ct) =>
         {
             injector.InyectarFalloProximoFlujo(req.Step, req.FailureType);
@@ -39,9 +41,9 @@ public static class DemoEndpoints
             var correlationId = Guid.NewGuid();
             var platos = await inventory.GetPlatosPorDefectoAsync(conBebida: false, ct);
 
-            await publisher.Publish(
-                new DecidirMenu(correlationId, Destino.Comedor, platos),
-                ct);
+            var cmd = new DecidirMenu(correlationId, Destino.Comedor, platos);
+            recorder.Registrar(correlationId, TipoRegistro.ComandoEnviado, nameof(DecidirMenu), cmd);
+            await publisher.Publish(cmd, ct);
 
             return Results.Accepted($"/api/demo/saga/{correlationId}", new { correlationId });
         });

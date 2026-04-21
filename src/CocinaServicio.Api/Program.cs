@@ -69,7 +69,6 @@ builder.Services.AddMassTransit(x =>
         cfg.UseMessageRetry(r => r.Immediate(3));
 
         var recorder = context.GetRequiredService<ISagaRecorder>();
-        cfg.ConnectPublishObserver(new RecordingPublishObserver(recorder));
         cfg.ConnectSendObserver(new RecordingSendObserver(recorder));
 
         cfg.ConfigureEndpoints(context);

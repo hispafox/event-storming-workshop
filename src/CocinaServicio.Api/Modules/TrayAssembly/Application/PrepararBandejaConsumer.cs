@@ -12,15 +12,18 @@ public class PrepararBandejaConsumer : IConsumer<PrepararBandeja>
 {
     private readonly IBandejaRepository _repository;
     private readonly IFailureInjector _failureInjector;
+    private readonly ISagaRecorder _recorder;
     private readonly ILogger<PrepararBandejaConsumer> _logger;
 
     public PrepararBandejaConsumer(
         IBandejaRepository repository,
         IFailureInjector failureInjector,
+        ISagaRecorder recorder,
         ILogger<PrepararBandejaConsumer> logger)
     {
         _repository = repository;
         _failureInjector = failureInjector;
+        _recorder = recorder;
         _logger = logger;
     }
 
@@ -29,11 +32,13 @@ public class PrepararBandejaConsumer : IConsumer<PrepararBandeja>
         var msg = context.Message;
         _logger.LogInformation("Preparando bandeja para comida {ComidaId}, destino {Destino}", msg.ComidaId, msg.Destino);
 
+        var cid = context.CorrelationId ?? msg.ComidaId;
+
         if (_failureInjector.DebeFallar("AssemblingTray", out _))
         {
             _failureInjector.Consumir("AssemblingTray");
             await Task.Delay(TimeSpan.FromMilliseconds(100), context.CancellationToken);
-            await context.Publish(new BandejaNoDisponible(msg.ComidaId, msg.Destino), context.CancellationToken);
+            await context.PublishYGrabar(new BandejaNoDisponible(msg.ComidaId, msg.Destino), _recorder, cid);
             return;
         }
 
@@ -43,13 +48,13 @@ public class PrepararBandejaConsumer : IConsumer<PrepararBandeja>
         {
             var bandeja = BandejaComedor.Crear(msg.ComidaId);
             await _repository.AddAsync(bandeja, context.CancellationToken);
-            await context.Publish(new BandejaComedorPreparada(bandeja.Id, msg.ComidaId), context.CancellationToken);
+            await context.PublishYGrabar(new BandejaComedorPreparada(bandeja.Id, msg.ComidaId), _recorder, cid);
         }
         else
         {
             var bandeja = BandejaCama.Crear(msg.ComidaId, msg.TieneBebida);
             await _repository.AddAsync(bandeja, context.CancellationToken);
-            await context.Publish(new BandejaCamaPreparada(bandeja.Id, msg.ComidaId, msg.TieneBebida), context.CancellationToken);
+            await context.PublishYGrabar(new BandejaCamaPreparada(bandeja.Id, msg.ComidaId, msg.TieneBebida), _recorder, cid);
         }
     }
 }
