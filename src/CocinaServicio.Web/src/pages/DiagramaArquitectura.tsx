@@ -141,11 +141,11 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 0', gap: 2 }}>
-      <svg width={24} height={SVG_H} style={{ overflow: 'visible' }}>
+      <svg width={24} height={SVG_H} style={{ overflow: 'visible' }} data-state={estado} data-event={eventName}>
         <line
           x1={12} y1={2} x2={12} y2={SVG_H - 6}
           stroke={color}
-          strokeWidth={firing ? 3 : done ? 2.5 : 2}
+          strokeWidth={firing ? 3.5 : done ? 3 : 2}
           strokeDasharray={type === 'async' ? '5,3' : undefined}
           opacity={lineOpacity}
         />
@@ -154,16 +154,21 @@ function Connector({ eventName, type, estado = 'pending' }: { eventName: string;
           fill={color}
           opacity={arrowOpacity}
         />
-        {activo && (
+        {done && (
+          <>
+            <circle cx={12} cy={SVG_H / 2} r={5} fill={color} opacity={0.85} />
+            <circle cx={12} cy={SVG_H / 2 - 14} r={3.5} fill={color} opacity={0.6} />
+            <circle cx={12} cy={SVG_H / 2 + 14} r={3.5} fill={color} opacity={0.6} />
+          </>
+        )}
+        {firing && (
           <>
             <circle cx={12} cy={2} r={particleR} fill={color}
               style={{ animation: `flujoParticula ${dur}s linear infinite`, opacity: 0 }} />
             <circle cx={12} cy={2} r={particleR - 1} fill={color}
               style={{ animation: `flujoParticula ${dur}s linear infinite`, animationDelay: `${dur * 0.33}s`, opacity: 0 }} />
-            {firing && (
-              <circle cx={12} cy={2} r={3} fill={color}
-                style={{ animation: `flujoParticula ${dur}s linear infinite`, animationDelay: `${dur * 0.66}s`, opacity: 0 }} />
-            )}
+            <circle cx={12} cy={2} r={3} fill={color}
+              style={{ animation: `flujoParticula ${dur}s linear infinite`, animationDelay: `${dur * 0.66}s`, opacity: 0 }} />
           </>
         )}
       </svg>

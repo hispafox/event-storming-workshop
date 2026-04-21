@@ -6,8 +6,8 @@ import type {
 
 export type ModoReproduccion = 'pasos' | 'tiempo';
 
-const RESALTADO_MS_PASOS = 500;
-const RESALTADO_MS_TIEMPO = 1400;
+const RESALTADO_MS_TIEMPO = 1000;
+const FACTOR_FIRING_PASO = 0.6;
 
 const MAPA_SERVICIOS: Record<string, ServicioId> = {
   DecidirMenu: 'menuPlanning', MenuDecidido: 'menuPlanning',
@@ -108,11 +108,11 @@ export function useReproductor(grabacion: Grabacion | null) {
 
   const duracionMs = useMemo(() => {
     if (eventosVirtuales.length === 0) return 0;
-    const resaltado = modo === 'pasos' ? duracionPasoMs : RESALTADO_MS_TIEMPO;
-    return eventosVirtuales[eventosVirtuales.length - 1].offsetVirtualMs + resaltado;
+    const cola = modo === 'pasos' ? duracionPasoMs : RESALTADO_MS_TIEMPO;
+    return eventosVirtuales[eventosVirtuales.length - 1].offsetVirtualMs + cola;
   }, [eventosVirtuales, modo, duracionPasoMs]);
 
-  const resaltadoMs = modo === 'pasos' ? duracionPasoMs : RESALTADO_MS_PASOS;
+  const resaltadoMs = modo === 'pasos' ? duracionPasoMs * FACTOR_FIRING_PASO : RESALTADO_MS_TIEMPO;
 
   useEffect(() => {
     setCursorMs(0);
